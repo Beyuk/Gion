@@ -8,11 +8,20 @@ import Tips from "./components/Tips";
 import BookAppointments from "./components/BookAppointments";
 import Testimonials from "./components/Testimonials";
 import Contact from "./components/Contact";
-import Feedback from "./components/Feedback";
 import Footer from "./components/Footer";
-import AdminAppointments from "./pages/admin/AdminAppointments";
 
-// HOME PAGE COMPONENT
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminAppointments from "./pages/admin/AdminAppointments";
+import AppointmentDetail from "./pages/admin/AppointmentDetail";
+import AdminServices from "./pages/admin/AdminServices";
+import AdminMessages from "./pages/admin/AdminMessages";
+
+// ✅ New imports for auth pages
+import AdminLogin from "./pages/admin/auth/AdminLogin";
+import ChangePassword from "./pages/admin/auth/ChangePassword";
+import ResetPassword from "./pages/admin/auth/ResetPassword";
+
 function HomePage() {
   return (
     <>
@@ -24,21 +33,51 @@ function HomePage() {
       <BookAppointments />
       <Testimonials />
       <Contact />
-      <Feedback />
       <Footer />
     </>
   );
 }
 
-// APP ROUTES
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
 
+        {/* Public Website */}
         <Route path="/" element={<HomePage />} />
 
-        <Route path="/admin/appointments" element={<AdminAppointments />} />
+        {/* Admin Auth */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/change-password" element={<ChangePassword />} />
+        <Route path="/admin/reset-password" element={<ResetPassword />} />
+
+        {/* Admin Panel (existing, untouched) */}
+        <Route path="/admin" element={<AdminLayout />}>
+
+          <Route index element={<AdminDashboard />} />
+
+          <Route path="appointments">
+            <Route index element={<AdminAppointments />} />
+            <Route path=":id" element={<AppointmentDetail />} />
+          </Route>
+
+          <Route path="services" element={<AdminServices />} />
+
+          <Route path="contact" element={<AdminMessages />} />
+
+          <Route path="users" element={<div>Users Management</div>} />
+
+        </Route>
+
+        {/* 404 */}
+        <Route
+          path="*"
+          element={
+            <div style={{ padding: "100px", textAlign: "center", fontSize: "32px" }}>
+              404 – Not Found
+            </div>
+          }
+        />
 
       </Routes>
     </BrowserRouter>

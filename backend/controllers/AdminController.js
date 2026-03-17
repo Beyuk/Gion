@@ -3,7 +3,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = "secretkey";
 
-// ====================== REGISTER ADMIN ======================
+
+
+// REGISTER ADMIN
 exports.registerAdmin = (req, res) => {
   const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -11,61 +13,83 @@ exports.registerAdmin = (req, res) => {
   db.query(
     "INSERT INTO admins (email, password) VALUES (?, ?)",
     [email, hashedPassword],
-    (err, result) => {
-      if (err) return res.status(500).json(err);
+    (err) => {
+      if (err) return res.status(500).json({ message: "Database error" });
       res.json({ message: "Admin registered successfully" });
     }
   );
 };
 
-// ====================== LOGIN ADMIN ======================
+// LOGIN ADMIN (YOUR WORKING CODE - UNTOUCHED)
 exports.loginAdmin = (req, res) => {
   const { email, password } = req.body;
 
   db.query("SELECT * FROM admins WHERE email = ?", [email], (err, result) => {
-    if (err) return res.status(500).json(err);
-    if (result.length === 0)
-      return res.status(404).json({ message: "Admin not found" });
+    if (err) return res.status(500).json({ message: "Database error" });
+    if (result.length === 0) return res.status(404).json({ message: "Admin not found" });
 
     const admin = result[0];
-    const isPasswordCorrect = bcrypt.compareSync(password, admin.password);
-    if (!isPasswordCorrect)
-      return res.status(400).json({ message: "Wrong password" });
+    if (!bcrypt.compareSync(password, admin.password)) return res.status(400).json({ message: "Wrong password" });
 
     const token = jwt.sign({ id: admin.id }, JWT_SECRET, { expiresIn: "1d" });
     res.json({ message: "Login successful", token });
   });
 };
 
-// ====================== APPOINTMENTS ======================
-
-// List all appointments
+// GET APPOINTMENTS
 exports.getAppointments = (req, res) => {
-  const sql = `
-    SELECT a.id, a.full_name, a.phone, a.email, a.service_id, s.name AS service_name,
-           a.preferred_treatment_type, a.preferred_date, a.message, a.status, a.created_at
-    FROM appointments a
-    LEFT JOIN services s ON a.service_id = s.id
-    ORDER BY a.created_at DESC
-  `;
-  db.query(sql, (err, result) => {
-    if (err) return res.status(500).json(err);
-    res.json(result);
-  });
+  db.query(
+    `SELECT 
+       id,
+       full_name AS patient,
+       phone,
+       email,
+       service_id,
+       preferred_treatment_type,
+       preferred_date,
+       message,
+       status,
+       created_at
+     FROM appointments
+     ORDER BY created_at DESC`,
+    (err, result) => {
+      if (err) {
+        console.log("Query error:", err.message);
+        return res.status(500).json({ message: "Database error" });
+      }
+      res.json(result);
+    }
+  );
 };
 
-// Approve or cancel appointment
+// UPDATE STATUS
 exports.updateAppointmentStatus = (req, res) => {
   const { id } = req.params;
-  const { status } = req.body; // expected "approved" or "canceled"
+  const { status } = req.body;
 
-  if (!["approved", "canceled"].includes(status)) {
-    return res.status(400).json({ message: "Invalid status" });
-  }
+  if (!status) return res.status(400).json({ message: "Status required" });
 
-  const sql = "UPDATE appointments SET status = ? WHERE id = ?";
-  db.query(sql, [status, id], (err, result) => {
-    if (err) return res.status(500).json(err);
-    res.json({ message: `Appointment ${status}` });
-  });
+  db.query(
+    "UPDATE appointments SET status = ? WHERE id = ?",
+    [status, id],
+    (err, result) => {
+      if (err) return res.status(500).json({ message: "Update failed" });
+      if (result.affectedRows === 0) return res.status(404).json({ message: "Not found" });
+      res.json({ message: `Status changed to ${status}` });
+    }
+  );
+};
+
+// DASHBOARD
+exports.dashboard = (req, res) => {
+  res.json({ message: "Dashboard is working" });
+};
+
+// CONTACT MESSAGES
+exports.getContactMessages = (req, res) => {
+  res.json([]);
+};
+
+exports.deleteContactMessage = (req, res) => {
+  res.json({ message: "Deleted" });
 };

@@ -3,8 +3,6 @@ import aboutImg from "../assets/About.png";
 import { motion } from "framer-motion";
 
 const About = () => {
-
-  // Scroll to appointment section
   const handleScheduleVisit = () => {
     const appointmentSection = document.getElementById("book");
     if (appointmentSection) {
@@ -55,25 +53,25 @@ const About = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 1 }}
-            className="w-full lg:w-1/2 flex flex-col justify-center space-y-8"
+            className="w-full lg:w-1/2 flex flex-col justify-center space-y-10"
           >
             {/* Header */}
             <div>
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="p-4 bg-gradient-to-r from-sky-500 to-blue-600 rounded-xl text-white shadow-lg">
                   <FaUserMd className="w-6 h-6" />
                 </div>
                 <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
                   About{" "}
                   <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
-                    Gion Dental Clinic
+                    Gion Speciality Dental Clinic
                   </span>
                 </h2>
               </div>
-              <div className="w-24 h-1 bg-gradient-to-r from-sky-500 to-blue-600 rounded-full"></div>
+              <div className="w-28 h-1 bg-gradient-to-r from-sky-500 to-blue-600 rounded-full mb-6"></div>
             </div>
 
-            {/* ===== Updated About Text ===== */}
+            {/* About Text */}
             <div className="space-y-5 text-gray-700 text-lg leading-relaxed">
               <p>
                 <span className="font-semibold text-sky-600">
@@ -114,7 +112,7 @@ const About = () => {
             </div>
 
             {/* Info Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
               {[
                 {
                   icon: <FaMapMarkerAlt className="w-6 h-6 text-sky-600" />,
@@ -138,7 +136,7 @@ const About = () => {
                     scale: 1.05,
                     boxShadow: "0px 20px 40px rgba(14,165,233,0.3)",
                   }}
-                  className="flex items-center gap-4 bg-white/70 backdrop-blur-md rounded-3xl p-6 shadow-md cursor-pointer transition-all duration-300"
+                  className="flex items-center gap-4 bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-md cursor-pointer transition-all duration-300"
                 >
                   {card.icon}
                   <div>
@@ -152,17 +150,17 @@ const About = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 mt-8">
+            <div className="flex flex-col sm:flex-row gap-6 mt-10">
               <button
                 onClick={handleScheduleVisit}
-                className="bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold py-4 px-10 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold py-4 px-12 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
               >
                 Schedule Your Visit
               </button>
 
               <button
                 onClick={handleCallClinic}
-                className="border-2 border-sky-500 text-sky-600 hover:bg-sky-50 font-semibold py-4 px-10 rounded-3xl transition-all duration-300"
+                className="border-2 border-sky-500 text-sky-600 hover:bg-sky-50 font-semibold py-4 px-12 rounded-3xl transition-all duration-300"
               >
                 Call Clinic
               </button>

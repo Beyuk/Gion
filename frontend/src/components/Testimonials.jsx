@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaChevronLeft, FaChevronRight, FaQuoteLeft, FaStar } from "react-icons/fa";
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const intervalRef = useRef(null);
 
   const testimonials = [
     {
       id: 1,
-      name: "Dr. Mariam Skuarie",
+      name: "Beyenech Sikuarie",
       role: "Patient",
       content: "Gion speciality is really a great clinic which gives us amazing services.",
       rating: 5,
@@ -15,7 +16,7 @@ const Testimonials = () => {
     },
     {
       id: 2,
-      name: "Belay Bekele",
+      name: "Rediet Yaikob",
       role: "Patient",
       content: "The clinic provides outstanding care and excellent service.",
       rating: 5,
@@ -23,7 +24,7 @@ const Testimonials = () => {
     },
     {
       id: 3,
-      name: "Damnie Sukare",
+      name: "Isiyak Solomon",
       role: "Patient",
       content: "Amazing experience! Highly professional staff.",
       rating: 5,
@@ -31,7 +32,7 @@ const Testimonials = () => {
     },
     {
       id: 4,
-      name: "Haile Aba",
+      name: "Haile Abebe",
       role: "Patient",
       content: "A truly wonderful clinic with great facilities.",
       rating: 5,
@@ -59,95 +60,130 @@ const Testimonials = () => {
     );
   };
 
+  // 🔥 Start Auto Slide
+  const startAutoSlide = () => {
+    intervalRef.current = setInterval(() => {
+      nextTestimonial();
+    }, 4000);
+  };
+
+  // 🛑 Stop Auto Slide
+  const stopAutoSlide = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+
+  useEffect(() => {
+    startAutoSlide();
+    return () => stopAutoSlide();
+  }, []);
+
   return (
-    <section id="testimonials" className="py-20 bg-sky-50">
-      <div className="max-w-6xl mx-auto px-4">
+    <section id="testimonials" className="py-24 bg-gradient-to-br from-sky-50 to-white">
+      <div className="max-w-6xl mx-auto px-6">
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-sky-800">Patient Testimonials</h2>
-          <p className="mt-3 text-gray-600">
-            Gion Clinic — Trusted by thousands of patients.
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold text-sky-900">
+            What Our Patients Say
+          </h2>
+          <p className="mt-4 text-gray-600 text-lg">
+            Gion Speciality Clinic — Trusted healthcare with compassion.
           </p>
         </div>
 
         {/* Slider */}
-        <div className="relative w-full overflow-hidden">
+        <div
+          className="relative overflow-hidden"
+          onMouseEnter={stopAutoSlide}
+          onMouseLeave={startAutoSlide}
+        >
           <div
-            className="flex transition-transform duration-500"
+            className="flex transition-transform duration-700 ease-in-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
             {testimonials.map((item) => (
-              <div key={item.id} className="w-full flex-shrink-0 px-4">
-                <div className="bg-white rounded-3xl shadow-xl p-10 flex flex-col md:flex-row items-center">
+              <div key={item.id} className="w-full flex-shrink-0 px-6">
+                <div className="bg-white rounded-3xl shadow-2xl p-12 flex flex-col md:flex-row items-center gap-10">
+
                   {/* Avatar */}
-                  <div className="md:w-1/3 flex justify-center mb-8 md:mb-0">
+                  <div className="flex justify-center md:w-1/3">
                     <div className="relative">
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-36 h-36 rounded-full border-4 border-sky-200 shadow-md object-cover"
+                        className="w-40 h-40 rounded-full border-4 border-sky-100 shadow-lg object-cover"
                       />
-                      <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-sky-600 text-white px-4 py-1 rounded-full text-sm">
+                      <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-sky-700 text-white px-5 py-1 rounded-full text-sm shadow">
                         {item.role}
                       </span>
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="md:w-2/3 md:pl-10">
-                    <div className="relative mb-6">
-                      <FaQuoteLeft className="text-sky-200 text-5xl absolute -top-4 -left-6" />
-                      <p className="text-gray-700 text-lg leading-relaxed relative z-10">
-                        {item.content}
-                      </p>
-                    </div>
+                  <div className="md:w-2/3">
+                    <FaQuoteLeft className="text-sky-100 text-6xl mb-4" />
 
-                    <h3 className="text-xl font-bold text-sky-800">{item.name}</h3>
+                    <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                      {item.content}
+                    </p>
+
+                    <h3 className="text-xl font-semibold text-sky-900">
+                      {item.name}
+                    </h3>
 
                     {/* Rating */}
-                    <div className="flex mt-2">
+                    <div className="flex mt-3">
                       {[...Array(5)].map((_, i) => (
                         <FaStar
                           key={i}
-                          className={`text-xl ${i < item.rating ? "text-yellow-400" : "text-gray-300"}`}
+                          className={`text-xl ${
+                            i < item.rating
+                              ? "text-yellow-400"
+                              : "text-gray-300"
+                          }`}
                         />
                       ))}
                     </div>
                   </div>
+
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Left/Right Buttons */}
+          {/* Navigation Buttons */}
           <button
             onClick={prevTestimonial}
-            className="absolute top-1/2 left-4 transform -translate-y-1/2 p-3 bg-white shadow-md rounded-full text-sky-600 hover:bg-sky-100"
+            className="absolute top-1/2 left-4 -translate-y-1/2 p-3 bg-white shadow-md rounded-full text-sky-700 hover:bg-sky-100 transition"
           >
             <FaChevronLeft />
           </button>
 
           <button
             onClick={nextTestimonial}
-            className="absolute top-1/2 right-4 transform -translate-y-1/2 p-3 bg-white shadow-md rounded-full text-sky-600 hover:bg-sky-100"
+            className="absolute top-1/2 right-4 -translate-y-1/2 p-3 bg-white shadow-md rounded-full text-sky-700 hover:bg-sky-100 transition"
           >
             <FaChevronRight />
           </button>
         </div>
 
-        {/* DOTS */}
-        <div className="flex justify-center mt-6">
+        {/* Dots */}
+        <div className="flex justify-center mt-10">
           {testimonials.map((_, i) => (
-            <div
+            <button
               key={i}
               onClick={() => setCurrentIndex(i)}
-              className={`w-3 h-3 mx-1 rounded-full cursor-pointer transition-all ${
-                currentIndex === i ? "bg-sky-600 scale-110" : "bg-gray-300"
+              className={`w-3 h-3 mx-2 rounded-full transition-all duration-300 ${
+                currentIndex === i
+                  ? "bg-sky-700 scale-125"
+                  : "bg-gray-300 hover:bg-sky-400"
               }`}
-            ></div>
+            />
           ))}
         </div>
+
       </div>
     </section>
   );

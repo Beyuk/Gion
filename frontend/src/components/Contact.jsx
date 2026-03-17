@@ -42,11 +42,11 @@ const Contact = () => {
   };
 
   return (
-    <section className="bg-gray-50 py-28">
+    <section id="contact" className="bg-gray-50 py-28">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-20">
           <h2 className="text-4xl font-bold text-gray-900">
-            Contact Gion Dental Clinic
+            Contact Gion Speciality Dental Clinic
           </h2>
           <p className="mt-4 text-lg text-gray-600">
             Professional dental care starts with a simple message
@@ -54,7 +54,6 @@ const Contact = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-14">
-          {/* INFO */}
           <div className="bg-white rounded-2xl shadow-md p-10">
             <h3 className="text-2xl font-semibold mb-8">Clinic Information</h3>
 
@@ -88,7 +87,6 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* FORM */}
           <div className="bg-white rounded-2xl shadow-md p-10">
             <h3 className="text-2xl font-semibold mb-8">
               Send Us a Message

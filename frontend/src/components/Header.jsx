@@ -66,11 +66,11 @@ const Header = () => {
         {/* ACTION BUTTONS */}
         <div className="hidden lg:flex items-center gap-6">
           <a
-            href="tel:+251900000000"
+            href="tel:+251961012087"
             className="flex items-center gap-2 text-[15px] font-semibold text-gray-700 hover:text-blue-600 transition-colors"
           >
             <PhoneCall size={18} />
-            Call
+Call Now
           </a>
 
           <button

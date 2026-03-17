@@ -1,18 +1,15 @@
 const mysql = require("mysql2");
 
-const db = mysql.createConnection({
+const pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "gion_dental_node"
+  database: "gion_dental_node",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error("Database connection failed:", err);
-  } else {
-    console.log("MySQL Connected...");
-  }
-});
+const promisePool = pool.promise();
 
-module.exports = db;
+module.exports = promisePool;

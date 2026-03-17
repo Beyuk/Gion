@@ -1,4 +1,4 @@
- import { CalendarCheck, Info } from "lucide-react";
+import { CalendarCheck, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import hero from "../assets/hero.png";
 
@@ -39,14 +39,14 @@ const Hero = () => {
           {/* Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row items-center lg:items-start gap-4 justify-center lg:justify-start">
             <motion.a
-              href="#book"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-3 bg-sky-600 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg hover:bg-sky-700 transition-all"
-            >
-              <CalendarCheck className="w-6 h-6" />
-              Book Appointment
-            </motion.a>
+  href="#appointments"
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  className="inline-flex items-center gap-3 bg-sky-600 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg hover:bg-sky-700 transition-all"
+>
+  <CalendarCheck className="w-6 h-6" />
+  Book Appointment
+</motion.a>
 
             <motion.a
               href="#services"

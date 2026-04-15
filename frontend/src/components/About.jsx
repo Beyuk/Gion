@@ -1,174 +1,287 @@
-import { FaUserMd, FaMapMarkerAlt, FaClock, FaTeeth } from "react-icons/fa";
-import aboutImg from "../assets/About.png";
+import { FaUserMd, FaClock, FaTeeth, FaHeart, FaPhoneAlt, FaCalendarAlt, FaCheckCircle, FaMicroscope, FaXRay, FaCamera, FaLaughBeam, FaCertificate, FaBriefcase } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import aboutImg from "../assets/About.png";
 
 const About = () => {
+  const navigate = useNavigate();
+
   const handleScheduleVisit = () => {
-    const appointmentSection = document.getElementById("book");
-    if (appointmentSection) {
-      appointmentSection.scrollIntoView({ behavior: "smooth" });
+    // Check if we're on the home page or about page
+    if (window.location.pathname === "/") {
+      // On home page, just scroll to appointments section
+      const appointmentsSection = document.getElementById("appointments");
+      if (appointmentsSection) {
+        const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset - 90;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    } else {
+      // On about page, navigate to home page first, then scroll to appointments
+      navigate("/");
+      setTimeout(() => {
+        const appointmentsSection = document.getElementById("appointments");
+        if (appointmentsSection) {
+          const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset - 90;
+          window.scrollTo({ top: y, behavior: "smooth" });
+        }
+      }, 300);
     }
   };
 
   const handleCallClinic = () => {
-    window.location.href = "tel:+251916166261";
+    window.location.href = "tel:+251961012087";
   };
 
+  const technologies = [
+    { icon: <FaMicroscope />, title: "CBCT 3D Imaging", desc: "Precise, low-radiation scans for accurate diagnoses" },
+    { icon: <FaCamera />, title: "Intraoral Cameras", desc: "See exactly what we see with high-res images" },
+    { icon: <FaXRay />, title: "Digital X-Rays", desc: "Quick, safe, and sharp — reducing radiation exposure" },
+    { icon: <FaLaughBeam />, title: "Sedation Dentistry", desc: "Relax with options for anxiety-free care" },
+  ];
+
+  const features = [
+    { icon: <FaCertificate />, title: "Upfront Pricing", desc: "No surprises. You'll know exactly what to expect." },
+    { icon: <FaTeeth />, title: "Specialist Excellence", desc: "5+ specialists transforming smiles with expertise" },
+    { icon: <FaHeart />, title: "Dedicated to You", desc: "We care about your smile, but we care more about you" },
+  ];
+
+  const coFounders = [
+    {
+      name: "Dr. Daniel Shukare Sakuma",
+      credentials: "DMD, HDP, PG Certificate in Dental Implantology",
+      title: "Senior Oral & Craniomaxillofacial Surgeon",
+      role: "General Manager",
+      exp: "17+ years",
+      achievements: ["Dental Implantology Specialist", "Craniomaxillofacial Expert"],
+    },
+    {
+      name: "Dr. Lakew Assefa",
+      credentials: "DMD, MSc",
+      title: "Expert Dental Medicine Specialist",
+      role: "Co-Founder",
+      exp: "25+ years",
+      achievements: ["Advanced Surgical Training", "Research Excellence"],
+    },
+    {
+      name: "Dr. Shewamamash Kebede",
+      credentials: "DMD",
+      title: "Expert Dental Medicine Specialist",
+      role: "Vice General Manager",
+      exp: "10+ years",
+      achievements: ["Clinical Excellence", "Patient Care Leadership"],
+    },
+  ];
+
   return (
-    <section
-      id="about"
-      className="relative py-32 bg-gradient-to-b from-sky-50 to-white overflow-hidden"
-    >
-      {/* Floating background shapes */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-gradient-to-r from-sky-300 to-blue-400 rounded-full opacity-20 blur-3xl animate-pulse"></div>
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gradient-to-r from-blue-200 to-sky-300 rounded-full opacity-20 blur-3xl animate-pulse"></div>
-
-      <div className="container mx-auto px-6 lg:px-20 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16 max-w-7xl mx-auto">
-
-          {/* ===== Image Section ===== */}
+    // ✅ ADDED id="about" HERE so header can scroll to it
+    <div id="about" className="bg-white pt-20">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-b from-sky-50 to-white pt-12 pb-16">
+        <div className="container mx-auto px-6 lg:px-20 max-w-7xl text-center">
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 1 }}
-            className="w-full lg:w-1/2 relative"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <img
-              src={aboutImg}
-              alt="Gion Speciality Dental Clinic"
-              className="w-full rounded-3xl shadow-2xl object-cover z-10"
-            />
+            <span className="text-sm font-semibold text-sky-600 bg-sky-100 px-4 py-1.5 rounded-full inline-block mb-4">
+              Get to know us!
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4">
+              About{' '}
+              <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+                Gion Speciality
+              </span>
+              <br />
+              Dental Clinic
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Serving Addis Ababa with excellence since 2009 E.C.
+            </p>
+          </motion.div>
+        </div>
+      </div>
 
-            {/* Experience Badge */}
-            <div className="absolute -bottom-12 -right-12 bg-gradient-to-r from-sky-500 to-blue-600 text-white p-6 rounded-3xl shadow-2xl flex flex-col items-center text-center">
-              <div className="text-3xl font-extrabold">15+</div>
-              <div className="text-sm font-semibold">Years Experience</div>
+      {/* Our Office Section */}
+      <div className="container mx-auto px-6 lg:px-20 max-w-7xl py-20">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Office</h2>
+            <p className="text-gray-600 text-lg leading-relaxed mb-4">
+              At Gion Speciality Dental Clinic, going to the dentist is simple and enjoyable. 
+              We're all about honest care delivered in modern, welcoming surroundings.
+            </p>
+            <p className="text-gray-600 leading-relaxed mb-6">
+              Our team provides the full spectrum of oral healthcare treatments with an eye for 
+              surgical excellence and cosmetic perfection.
+            </p>
+            <div className="flex items-center gap-2 text-sky-600 font-medium">
+              <FaClock />
+              <span>Open Monday to Saturday — 8:00 AM - 7:00 PM</span>
             </div>
           </motion.div>
-
-          {/* ===== Content Section ===== */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 1 }}
-            className="w-full lg:w-1/2 flex flex-col justify-center space-y-10"
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="rounded-2xl overflow-hidden shadow-xl"
           >
-            {/* Header */}
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-4 bg-gradient-to-r from-sky-500 to-blue-600 rounded-xl text-white shadow-lg">
-                  <FaUserMd className="w-6 h-6" />
-                </div>
-                <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
-                  About{" "}
-                  <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
-                    Gion Speciality Dental Clinic
-                  </span>
-                </h2>
-              </div>
-              <div className="w-28 h-1 bg-gradient-to-r from-sky-500 to-blue-600 rounded-full mb-6"></div>
-            </div>
+            <img src={aboutImg} alt="Gion Speciality Dental Clinic Office" className="w-full h-auto" />
+          </motion.div>
+        </div>
+      </div>
 
-            {/* About Text */}
-            <div className="space-y-5 text-gray-700 text-lg leading-relaxed">
-              <p>
-                <span className="font-semibold text-sky-600">
-                  Gion Speciality Dental Clinic
-                </span>{" "}
-                is a unique dental clinic in Ethiopia with a team of more than
-                five specialist and certified professional doctors, supported
-                by skilled dental hygienists, assistants, and dental
-                technicians.
+      {/* Co-Founders Section */}
+      <div className="bg-gray-50 py-20">
+        <div className="container mx-auto px-6 lg:px-20 max-w-7xl">
+          <div className="text-center mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Meet Our Co-Founders</h2>
+              <p className="text-gray-500 max-w-2xl mx-auto">
+                Visionary leaders committed to excellence in dental care
               </p>
-
-              <p>
-                Our team has a strong passion for the science and art of
-                dentistry, including oral and craniofacial surgery. We are
-                highly competent and committed to delivering the best, most
-                up-to-date, and friendly dental healthcare services.
-              </p>
-
-              <p>
-                We treat all our clients with the utmost respect, courtesy,
-                professionalism, honesty, and confidentiality.
-              </p>
-
-              <p>
-                Gion Speciality Dental Clinic was founded in 2009 E.C. by
-                professionals who have served at Addis Ababa University for
-                more than 20 years, some of whom continue to work as professors
-                at different academic ranks.
-              </p>
-
-              <p>
-                The founder and CEO is a well-renowned and highly qualified
-                dental and craniomaxillofacial specialist with more than 15
-                years of experience. The clinic was built on a strong vision
-                and mission to establish a dental practice that meets the
-                highest standards in Ethiopia.
-              </p>
-            </div>
-
-            {/* Info Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
-              {[
-                {
-                  icon: <FaMapMarkerAlt className="w-6 h-6 text-sky-600" />,
-                  title: "Location",
-                  desc: "Megenagna 3M Mall, Addis Ababa",
-                },
-                {
-                  icon: <FaClock className="w-6 h-6 text-sky-600" />,
-                  title: "Working Hours",
-                  desc: "Mon - Sat: 8:00 AM - 7:00 PM",
-                },
-                {
-                  icon: <FaTeeth className="w-6 h-6 text-sky-600" />,
-                  title: "Specialization",
-                  desc: "Comprehensive Dental Services",
-                },
-              ].map((card, i) => (
-                <motion.div
-                  key={i}
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: "0px 20px 40px rgba(14,165,233,0.3)",
-                  }}
-                  className="flex items-center gap-4 bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-md cursor-pointer transition-all duration-300"
-                >
-                  {card.icon}
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {card.title}
-                    </h4>
-                    <p className="text-gray-600">{card.desc}</p>
+            </motion.div>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {coFounders.map((founder, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1, duration: 0.5 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <div className="bg-gradient-to-br from-sky-500 to-blue-600 p-6 text-center">
+                  <div className="bg-white/20 rounded-full w-28 h-28 flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                    <FaUserMd className="text-white text-5xl" />
                   </div>
-                </motion.div>
-              ))}
-            </div>
+                  <h3 className="text-xl font-bold text-white mb-1">{founder.name}</h3>
+                  <p className="text-sky-100 text-sm font-medium">{founder.credentials}</p>
+                </div>
+                <div className="p-6">
+                  <div className="mb-4">
+                    <span className="inline-block bg-sky-100 text-sky-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                      {founder.role}
+                    </span>
+                    <p className="font-semibold text-gray-800">{founder.title}</p>
+                  </div>
+                  <div className="border-t border-gray-100 pt-4 mt-2">
+                    <div className="flex items-center gap-2 text-gray-600 text-sm mb-2">
+                      <FaBriefcase className="text-sky-500 text-sm" />
+                      <span>{founder.exp} of experience</span>
+                    </div>
+                    {founder.achievements.map((achievement, i) => (
+                      <div key={i} className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                        <FaCheckCircle className="text-sky-500 text-xs" />
+                        <span>{achievement}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 mt-10">
+      {/* Technology Section */}
+      <div className="bg-white py-20">
+        <div className="container mx-auto px-6 lg:px-20 max-w-7xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Advanced Technology</h2>
+            <p className="text-gray-500">Modern equipment for exceptional comfort and precision</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {technologies.map((tech, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-gray-50 rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all"
+              >
+                <div className="text-sky-500 text-4xl mb-4 flex justify-center">{tech.icon}</div>
+                <h3 className="font-bold text-gray-900 mb-2">{tech.title}</h3>
+                <p className="text-gray-500 text-sm">{tech.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="bg-gray-50 py-20">
+        <div className="container mx-auto px-6 lg:px-20 max-w-7xl">
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center bg-white rounded-xl p-8 shadow-md"
+              >
+                <div className="bg-sky-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <div className="text-sky-500 text-2xl">{feature.icon}</div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-500">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="container mx-auto px-6 lg:px-20 max-w-7xl py-20">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Care at Gion Speciality — <span className="text-sky-600">painless & pleasant</span>
+            </h2>
+            <p className="text-gray-600 text-lg mb-8">
+              Experience dentistry redefined with compassionate specialists and modern technology.
+              Your smile is our priority.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={handleScheduleVisit}
-                className="bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold py-4 px-12 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                className="bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold py-3 px-8 rounded-full hover:shadow-xl transition-all flex items-center justify-center gap-2"
               >
-                Schedule Your Visit
+                <FaCalendarAlt />
+                Book Appointment
               </button>
-
               <button
                 onClick={handleCallClinic}
-                className="border-2 border-sky-500 text-sky-600 hover:bg-sky-50 font-semibold py-4 px-12 rounded-3xl transition-all duration-300"
+                className="border-2 border-sky-500 text-sky-600 font-semibold py-3 px-8 rounded-full hover:bg-sky-50 transition-all flex items-center justify-center gap-2"
               >
-                Call Clinic
+                <FaPhoneAlt />
+                Call: 0961 01 2087
               </button>
             </div>
           </motion.div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

@@ -16,7 +16,7 @@ export default function AppointmentDetail() {
 
   const fetchAppointment = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/appointments/${id}`);
+      const res = await axios.get(`http://192.168.137.20:5000/api/appointments/${id}`);
       setAppt(res.data);
       setEditDate(res.data.preferred_date.split('T')[0]);
       setEditTime(res.data.preferred_date.split('T')[1]?.substring(0,5) || '');

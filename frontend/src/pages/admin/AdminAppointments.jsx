@@ -9,6 +9,12 @@ const AdminAppointments = () => {
   const [filter, setFilter] = useState('all');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
@@ -17,16 +23,12 @@ const AdminAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      // Get token from localStorage if you're using authentication
       const token = localStorage.getItem('adminToken');
       
       const response = await axios.get('http://localhost:5000/api/appointments', {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       
-      console.log('Raw API response:', response.data);
-      
-      // Handle the response based on your API structure
       const appointmentsData = response.data.data || response.data;
       setAppointments(appointmentsData);
       setError(null);
@@ -47,38 +49,70 @@ const AdminAppointments = () => {
         { headers: token ? { 'Authorization': `Bearer ${token}` } : {} }
       );
       
-      // Update local state
       setAppointments(prev => 
-        prev.map(apt => 
-          apt.id === id ? { ...apt, status: newStatus } : apt
-        )
+        prev.map(apt => apt.id === id ? { ...apt, status: newStatus } : apt)
       );
       
-      alert(`Appointment ${newStatus} successfully!`);
+      alert(`Appointment #${id} marked as ${newStatus}`);
     } catch (err) {
       console.error('Error updating status:', err);
       alert('Failed to update appointment status');
     }
   };
 
+  const deleteAppointment = async (id) => {
+    try {
+      setDeleting(true);
+      const token = localStorage.getItem('adminToken');
+      
+      await axios.delete(`http://localhost:5000/api/appointments/${id}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      setAppointments(prev => prev.filter(apt => apt.id !== id));
+      setShowDeleteConfirm(false);
+      setAppointmentToDelete(null);
+      
+      if (selectedAppointment?.id === id) {
+        setShowDetails(false);
+        setSelectedAppointment(null);
+      }
+      
+      alert(`Appointment #${id} has been deleted successfully`);
+    } catch (err) {
+      console.error('Error deleting appointment:', err);
+      alert('Failed to delete appointment. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Only allow deletion for completed or rejected appointments
+  const canDeleteAppointment = (appointment) => {
+    return appointment.status === 'completed' || appointment.status === 'rejected';
+  };
+
+  const getDeleteTooltip = (appointment) => {
+    if (appointment.status === 'completed') {
+      return 'Delete completed appointment';
+    }
+    if (appointment.status === 'rejected') {
+      return 'Delete rejected appointment';
+    }
+    return 'Only completed or rejected appointments can be deleted';
+  };
+
   const extractServiceFromMessage = (message) => {
     if (!message) return 'General Checkup';
-    // Handle both formats: "Service at Time" and "Service | Time: Time"
-    if (message.includes(' at ')) {
-      return message.split(' at ')[0];
-    } else if (message.includes(' | Time: ')) {
-      return message.split(' | Time: ')[0];
-    }
+    if (message.includes(' at ')) return message.split(' at ')[0];
+    if (message.includes(' | Time: ')) return message.split(' | Time: ')[0];
     return message;
   };
 
   const extractTimeFromMessage = (message) => {
     if (!message) return 'N/A';
-    if (message.includes(' at ')) {
-      return message.split(' at ')[1];
-    } else if (message.includes(' | Time: ')) {
-      return message.split(' | Time: ')[1];
-    }
+    if (message.includes(' at ')) return message.split(' at ')[1];
+    if (message.includes(' | Time: ')) return message.split(' | Time: ')[1];
     return 'N/A';
   };
 
@@ -102,29 +136,10 @@ const AdminAppointments = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-      default:
-        return 'bg-yellow-100 text-yellow-800';
-    }
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
-
-  const getModeColor = (mode) => {
-    return mode?.toLowerCase() === 'online' 
-      ? 'bg-purple-100 text-purple-800'
-      : 'bg-blue-100 text-blue-800';
-  };
-
-  const filteredAppointments = filter === 'all' 
-    ? appointments 
-    : appointments.filter(apt => apt.status === filter);
 
   const stats = {
     total: appointments.length,
@@ -134,229 +149,595 @@ const AdminAppointments = () => {
     completed: appointments.filter(a => a.status === 'completed').length
   };
 
+  const filteredAppointments = appointments.filter(app => {
+    if (filter !== 'all' && app.status !== filter) return false;
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      return (
+        app.full_name?.toLowerCase().includes(term) ||
+        app.phone?.includes(term) ||
+        app.email?.toLowerCase().includes(term) ||
+        extractServiceFromMessage(app.message)?.toLowerCase().includes(term)
+      );
+    }
+    
+    return true;
+  });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredAppointments.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm]);
+
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500', label: 'Pending' },
+      approved: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-500', label: 'Approved' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-500', label: 'Rejected' },
+      completed: { bg: 'bg-blue-100', text: 'text-blue-800', dot: 'bg-blue-500', label: 'Completed' }
+    };
+    return badges[status] || badges.pending;
+  };
+
+  const getModeBadge = (mode) => {
+    return mode?.toLowerCase() === 'online' 
+      ? { bg: 'bg-purple-100', text: 'text-purple-800', icon: '🌐' }
+      : { bg: 'bg-gray-100', text: 'text-gray-800', icon: '📍' };
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg text-gray-600">Loading appointments...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading appointments...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded m-6">
-        {error}
-        <button 
-          onClick={fetchAppointments}
-          className="ml-4 bg-red-700 text-white px-3 py-1 rounded text-sm"
-        >
-          Retry
-        </button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Appointments</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={fetchAppointments}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header with Stats */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">Appointments Management</h1>
-        
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
+          <p className="text-gray-600 mt-1">Manage and track all patient appointments</p>
+        </div>
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-5 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <div className="text-sm text-gray-600">Total</div>
-            <div className="text-2xl font-bold">{stats.total}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p className="text-sm text-gray-600 mb-1">Total</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
           </div>
-          <div className="bg-yellow-50 p-4 rounded-lg shadow">
-            <div className="text-sm text-yellow-600">Pending</div>
-            <div className="text-2xl font-bold text-yellow-700">{stats.pending}</div>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg shadow">
-            <div className="text-sm text-green-600">Approved</div>
-            <div className="text-2xl font-bold text-green-700">{stats.approved}</div>
-          </div>
-          <div className="bg-red-50 p-4 rounded-lg shadow">
-            <div className="text-sm text-red-600">Rejected</div>
-            <div className="text-2xl font-bold text-red-700">{stats.rejected}</div>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg shadow">
-            <div className="text-sm text-blue-600">Completed</div>
-            <div className="text-2xl font-bold text-blue-700">{stats.completed}</div>
-          </div>
-        </div>
-
-        {/* Filter Buttons */}
-        <div className="flex gap-2">
-          {['all', 'pending', 'approved', 'rejected', 'completed'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg capitalize ${
-                filter === status 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {status} ({status === 'all' ? stats.total : stats[status] || 0})
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Appointments Table */}
-      {filteredAppointments.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-gray-500 text-lg">No appointments found</p>
-          <p className="text-gray-400 mt-2">Try changing your filter or add new appointments</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAppointments.map((app) => (
-                <tr key={app.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    #{app.id}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{app.full_name}</div>
-                    <div className="text-sm text-gray-500">{app.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {app.phone}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {extractServiceFromMessage(app.message)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(app.preferred_date)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {extractTimeFromMessage(app.message)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs ${getModeColor(app.preferred_treatment_type)}`}>
-                      {app.preferred_treatment_type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(app.status)}`}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <select
-                      value={app.status}
-                      onChange={(e) => updateStatus(app.id, e.target.value)}
-                      className="border rounded px-2 py-1 text-sm bg-white"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approve</option>
-                      <option value="rejected">Reject</option>
-                      <option value="completed">Complete</option>
-                    </select>
-                    
-                    <button
-                      onClick={() => {
-                        setSelectedAppointment(app);
-                        setShowDetails(true);
-                      }}
-                      className="ml-2 text-blue-600 hover:text-blue-800"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Details Modal */}
-      {showDetails && selectedAppointment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Appointment Details #{selectedAppointment.id}</h2>
-              <button 
-                onClick={() => setShowDetails(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+              <p className="text-sm text-gray-600">Pending</p>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-500">Full Name</label>
-                <p className="font-medium">{selectedAppointment.full_name}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Phone</label>
-                <p className="font-medium">{selectedAppointment.phone}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Email</label>
-                <p className="font-medium">{selectedAppointment.email}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Service</label>
-                <p className="font-medium">{extractServiceFromMessage(selectedAppointment.message)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Date</label>
-                <p className="font-medium">{formatDate(selectedAppointment.preferred_date)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Time</label>
-                <p className="font-medium">{extractTimeFromMessage(selectedAppointment.message)}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Mode</label>
-                <p className="font-medium">{selectedAppointment.preferred_treatment_type}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Status</label>
-                <p className={`font-medium capitalize ${getStatusColor(selectedAppointment.status)} inline-block px-2 py-1 rounded`}>
-                  {selectedAppointment.status}
-                </p>
-              </div>
-              <div className="col-span-2">
-                <label className="text-sm text-gray-500">Message</label>
-                <p className="font-medium bg-gray-50 p-3 rounded">{selectedAppointment.message}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Created At</label>
-                <p className="font-medium">{formatDateTime(selectedAppointment.created_at)}</p>
-              </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.pending}</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <p className="text-sm text-gray-600">Approved</p>
             </div>
-            
-            <div className="mt-6 flex justify-end">
+            <p className="text-3xl font-bold text-gray-900">{stats.approved}</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+              <p className="text-sm text-gray-600">Rejected</p>
+            </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.rejected}</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+              <p className="text-sm text-gray-600">Completed</p>
+            </div>
+            <p className="text-3xl font-bold text-gray-900">{stats.completed}</p>
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setShowDetails(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === 'all'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                Close
+                All ({stats.total})
+              </button>
+              <button
+                onClick={() => setFilter('pending')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === 'pending'
+                    ? 'bg-yellow-500 text-white'
+                    : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+                }`}
+              >
+                Pending ({stats.pending})
+              </button>
+              <button
+                onClick={() => setFilter('approved')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === 'approved'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-green-50 text-green-700 hover:bg-green-100'
+                }`}
+              >
+                Approved ({stats.approved})
+              </button>
+              <button
+                onClick={() => setFilter('rejected')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === 'rejected'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-red-50 text-red-700 hover:bg-red-100'
+                }`}
+              >
+                Rejected ({stats.rejected})
+              </button>
+              <button
+                onClick={() => setFilter('completed')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  filter === 'completed'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                }`}
+              >
+                Completed ({stats.completed})
               </button>
             </div>
+
+            <div className="w-full lg:w-96">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search patients, phone, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <svg
+                  className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 text-sm text-gray-600">
+            Showing {filteredAppointments.length} of {appointments.length} appointments
           </div>
         </div>
-      )}
+
+        {/* Appointments Table */}
+        {filteredAppointments.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="text-gray-400 text-5xl mb-4">📅</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
+            <p className="text-gray-600">
+              {searchTerm 
+                ? 'Try adjusting your search terms'
+                : filter !== 'all' 
+                ? `No ${filter} appointments at the moment`
+                : 'No appointments have been booked yet'}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Patient
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Service
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date & Time
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Mode
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {currentItems.map((app) => {
+                    const statusBadge = getStatusBadge(app.status);
+                    const modeBadge = getModeBadge(app.preferred_treatment_type);
+                    const canDelete = canDeleteAppointment(app);
+                    const deleteTooltip = getDeleteTooltip(app);
+                    
+                    return (
+                      <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                              <span className="text-white font-medium text-sm">
+                                {getInitials(app.full_name)}
+                              </span>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {app.full_name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                #{app.id}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">{app.phone}</div>
+                          <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                            {app.email}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
+                            {extractServiceFromMessage(app.message)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
+                            {formatDate(app.preferred_date)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {extractTimeFromMessage(app.message)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${modeBadge.bg} ${modeBadge.text}`}>
+                            <span className="mr-1">{modeBadge.icon}</span>
+                            {app.preferred_treatment_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge.bg} ${statusBadge.text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot} mr-1.5`}></span>
+                            {statusBadge.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <select
+                              value={app.status}
+                              onChange={(e) => updateStatus(app.id, e.target.value)}
+                              className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="approved">Approve</option>
+                              <option value="rejected">Reject</option>
+                              <option value="completed">Complete</option>
+                            </select>
+                            <button
+                              onClick={() => {
+                                setSelectedAppointment(app);
+                                setShowDetails(true);
+                              }}
+                              className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (canDelete) {
+                                  setAppointmentToDelete(app);
+                                  setShowDeleteConfirm(true);
+                                }
+                              }}
+                              disabled={!canDelete}
+                              title={deleteTooltip}
+                              className={`px-3 py-1.5 text-sm rounded-lg transition-colors font-medium flex items-center gap-1 ${
+                                canDelete 
+                                  ? 'bg-red-50 text-red-700 hover:bg-red-100 cursor-pointer' 
+                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="bg-white px-6 py-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
+                    <span className="font-medium">
+                      {Math.min(indexOfLastItem, filteredAppointments.length)}
+                    </span>{' '}
+                    of <span className="font-medium">{filteredAppointments.length}</span> results
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-1 rounded-md ${
+                        currentPage === 1
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-1 rounded-md ${
+                        currentPage === totalPages
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                      }`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && appointmentToDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-md w-full shadow-2xl">
+              <div className="p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="bg-red-100 rounded-full p-4">
+                    <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 text-center mb-3">
+                  Delete Appointment?
+                </h3>
+                <p className="text-gray-600 text-center mb-2">
+                  Are you sure you want to permanently delete appointment <span className="font-bold text-gray-900">#{appointmentToDelete.id}</span>?
+                </p>
+                <p className="text-gray-600 text-center mb-4">
+                  Patient: <span className="font-medium">{appointmentToDelete.full_name}</span>
+                  <br />
+                  Status: <span className="font-medium capitalize">{appointmentToDelete.status}</span>
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+                  <p className="text-sm text-yellow-800 text-center flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    This action cannot be undone!
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setAppointmentToDelete(null);
+                    }}
+                    disabled={deleting}
+                    className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => deleteAppointment(appointmentToDelete.id)}
+                    disabled={deleting}
+                    className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {deleting ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Yes, Delete Appointment
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Details Modal */}
+        {showDetails && selectedAppointment && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Appointment Details #{selectedAppointment.id}
+                </h2>
+                <button
+                  onClick={() => setShowDetails(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">Patient Information</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-400">Full Name</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedAppointment.full_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Phone</p>
+                        <p className="text-sm text-gray-900">{selectedAppointment.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Email</p>
+                        <p className="text-sm text-gray-900">{selectedAppointment.email}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">Appointment Details</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-400">Service</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {extractServiceFromMessage(selectedAppointment.message)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Date & Time</p>
+                        <p className="text-sm text-gray-900">
+                          {formatDate(selectedAppointment.preferred_date)} at {extractTimeFromMessage(selectedAppointment.message)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">Mode</p>
+                        <p className="text-sm text-gray-900">{selectedAppointment.preferred_treatment_type}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">Status</h3>
+                    <div className="flex items-center space-x-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(selectedAppointment.status).bg} ${getStatusBadge(selectedAppointment.status).text}`}>
+                        <span className={`w-2 h-2 rounded-full ${getStatusBadge(selectedAppointment.status).dot} mr-2`}></span>
+                        {getStatusBadge(selectedAppointment.status).label}
+                      </span>
+                      <select
+                        value={selectedAppointment.status}
+                        onChange={(e) => {
+                          updateStatus(selectedAppointment.id, e.target.value);
+                          setSelectedAppointment({...selectedAppointment, status: e.target.value});
+                        }}
+                        className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approve</option>
+                        <option value="rejected">Reject</option>
+                        <option value="completed">Complete</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">Message</h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-900">{selectedAppointment.message}</p>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <h3 className="text-sm font-medium text-gray-500 mb-3">Created</h3>
+                    <p className="text-sm text-gray-900">{formatDateTime(selectedAppointment.created_at)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-between">
+                {canDeleteAppointment(selectedAppointment) && (
+                  <button
+                    onClick={() => {
+                      setShowDetails(false);
+                      setAppointmentToDelete(selectedAppointment);
+                      setShowDeleteConfirm(true);
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 font-medium"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Appointment
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowDetails(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors ml-auto font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

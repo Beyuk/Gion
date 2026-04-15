@@ -39,31 +39,29 @@ const BookAppointment = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear any previous errors when user starts typing
     setBookingError(null);
   };
 
   const handleConfirmBooking = async () => {
+    // Validate required fields
+    if (!formData.name || !formData.phone || !formData.date || !formData.time) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    setIsLoading(true);
+    setBookingError(null);
+
     try {
-      // Validate required fields
-      if (!formData.name || !formData.phone || !formData.date || !formData.time) {
-        alert("Please fill in all required fields");
-        return;
-      }
-
-      // Set loading state
-      setIsLoading(true);
-      setBookingError(null);
-
       // Prepare payload matching backend expectations
       const payload = {
         full_name: formData.name,
         phone: formData.phone,
-        email: formData.email || null, // Send null if empty
+        email: formData.email || null,
         service: formData.services,
-        preferred_mode: formData.mode,     // ← Changed from "mode" to "preferred_mode"
-        preferred_date: formData.date,      // ← Changed from "date" to "preferred_date"
-        preferred_time: formData.time       // ← Changed from "time" to "preferred_time"
+        preferred_mode: formData.mode,
+        preferred_date: formData.date,
+        preferred_time: formData.time
       };
 
       console.log("📤 Sending to backend:", payload);
@@ -76,8 +74,6 @@ const BookAppointment = () => {
       
       console.log("✅ Success:", res.data);
       
-      // Show success message
-      alert("Appointment booked successfully!");
       setIsConfirmed(true);
       
     } catch (error) {
@@ -87,21 +83,15 @@ const BookAppointment = () => {
         status: error.response?.status
       });
       
-      // Show user-friendly error message
-      if (error.response) {
-        // Server responded with error
-        const errorMsg = error.response.data.message || error.response.data.error || 'Server error';
-        alert(`Booking failed: ${errorMsg}`);
-        setBookingError(errorMsg);
-      } else if (error.request) {
-        // Request made but no response
-        alert("Cannot connect to server. Please check if backend is running on port 5000");
-        setBookingError("Connection error - backend not responding");
-      } else {
-        // Other errors
-        alert(`Error: ${error.message}`);
-        setBookingError(error.message);
+      let errorMsg = "Failed to book appointment. Please try again.";
+      if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
       }
+      
+      alert(`Booking failed: ${errorMsg}`);
+      setBookingError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -276,6 +266,12 @@ const BookAppointment = () => {
                       disabled={isLoading}
                     >
                       {isLoading ? 'Booking...' : 'Confirm Booking'}
+                    </button>
+                    <button 
+                      onClick={() => setActiveStep(2)} 
+                      className="btn-secondary ml-3"
+                    >
+                      Back
                     </button>
                   </>
                 ) : (

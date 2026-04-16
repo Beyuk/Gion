@@ -69,11 +69,12 @@ const TRUST_INDICATORS = [
   { icon: FaTooth, title: "Modern Technology", subtitle: "Advanced Equipment", color: "text-blue-300" }
 ];
 
+// QUICK LINKS with correct section mapping
 const QUICK_LINKS = [
-  { name: "Home", href: "/" },
-  { name: "About Us", href: "/about" },
-  { name: "Services", href: "/services" },
-  { name: "Book Appointment", href: "/appointment" }
+  { name: "Home", section: "home" },
+  { name: "About Us", section: "about" },
+  { name: "Services", section: "services" },
+  { name: "Book Appointment", section: "appointments" }
 ];
 
 // ===== ANIMATION VARIANTS =====
@@ -160,11 +161,32 @@ const Footer = () => {
     }
   }, [email]);
 
+  // FIXED: Scroll to section - matches your existing IDs from Header and components
+  const scrollToSection = useCallback((sectionId) => {
+    const element = document.getElementById(sectionId);
+    
+    if (element) {
+      const headerOffset = 90; // Matches your Header.jsx offset (90px)
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    } else {
+      // Fallback for Home if no ID found
+      if (sectionId === "home") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  }, []);
+
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white overflow-hidden">
-      {/* Decorative Background Elements - Cleaner */}
+      {/* Decorative Background Elements */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400 rounded-full filter blur-3xl" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-400 rounded-full filter blur-3xl" />
@@ -244,7 +266,7 @@ const Footer = () => {
           <motion.div variants={fadeInUp} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-blue-400/30 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5">
             <h3 className="text-lg font-semibold mb-5 flex items-center">
               <GrContactInfo className="mr-3 text-blue-400" />
-              Contact Us
+              Contact
             </h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm">
@@ -274,7 +296,7 @@ const Footer = () => {
             </ul>
           </motion.div>
 
-          {/* QUICK LINKS */}
+          {/* QUICK LINKS - WORKING VERSION */}
           <motion.div variants={fadeInUp} className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10 hover:border-blue-400/30 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5">
             <h3 className="text-lg font-semibold mb-5 flex items-center">
               <FaArrowRight className="mr-3 text-blue-400" />
@@ -283,15 +305,15 @@ const Footer = () => {
             <ul className="space-y-3">
               {QUICK_LINKS.map((link, index) => (
                 <li key={index}>
-                  <a 
-                    href={link.href}
-                    className="text-white/70 hover:text-blue-300 transition-colors flex items-center gap-2 group text-sm"
+                  <button
+                    onClick={() => scrollToSection(link.section)}
+                    className="text-white/70 hover:text-blue-300 transition-colors flex items-center gap-2 group text-sm w-full cursor-pointer"
                   >
                     <FaArrowRight className="text-xs opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
                     <span className="group-hover:translate-x-1 transition-transform">
                       {link.name}
                     </span>
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -375,15 +397,24 @@ const Footer = () => {
             © {currentYear} Gion Specialty Dental Clinic. All rights reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-6">
-            <a href="/privacy" className="text-white/40 hover:text-blue-300 transition-colors text-sm">
+            <button
+              onClick={() => scrollToSection("privacy")}
+              className="text-white/40 hover:text-blue-300 transition-colors text-sm cursor-pointer"
+            >
               Privacy
-            </a>
-            <a href="/terms" className="text-white/40 hover:text-blue-300 transition-colors text-sm">
+            </button>
+            <button
+              onClick={() => scrollToSection("terms")}
+              className="text-white/40 hover:text-blue-300 transition-colors text-sm cursor-pointer"
+            >
               Terms
-            </a>
-            <a href="/cookies" className="text-white/40 hover:text-blue-300 transition-colors text-sm">
+            </button>
+            <button
+              onClick={() => scrollToSection("cookies")}
+              className="text-white/40 hover:text-blue-300 transition-colors text-sm cursor-pointer"
+            >
               Cookies
-            </a>
+            </button>
           </div>
         </motion.div>
       </div>

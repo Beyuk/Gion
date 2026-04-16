@@ -1,7 +1,20 @@
 import { useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaUser, FaCalendarAlt, FaCheckCircle } from "react-icons/fa";
+import { 
+  FaUser, 
+  FaCalendarAlt, 
+  FaCheckCircle, 
+  FaPhone, 
+  FaEnvelope, 
+  FaTooth, 
+  FaClock,
+  FaArrowRight,
+  FaArrowLeft,
+  FaSpinner,
+  FaClinicMedical
+} from "react-icons/fa";
+import { MdLocationOn, MdOnlinePrediction } from "react-icons/md";
 
 const BookAppointment = () => {
   const [activeStep, setActiveStep] = useState(1);
@@ -16,7 +29,7 @@ const BookAppointment = () => {
     date: "",
     time: "",
     mode: "In-person",
-    services: "General Checkup",
+    service: "General Checkup",
   });
 
   const services = [
@@ -26,14 +39,16 @@ const BookAppointment = () => {
     "Root Canal",
     "Teeth Whitening",
     "Orthodontic Consultation",
+    "Dental Implant",
+    "Emergency Care",
   ];
 
   const availableTimes = [
-    "8:00 AM","8:30 AM","9:00 AM","9:30 AM",
-    "10:00 AM","11:00 AM","11:30 AM",
-    "1:00 PM","2:00 PM","2:30 PM",
-    "3:00 PM","3:30 PM","4:00 PM",
-    "5:00 PM","5:30 PM","6:00 PM",
+    "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
+    "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+    "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
+    "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
+    "5:00 PM", "5:30 PM", "6:00 PM",
   ];
 
   const handleInputChange = (e) => {
@@ -43,9 +58,8 @@ const BookAppointment = () => {
   };
 
   const handleConfirmBooking = async () => {
-    // Validate required fields
     if (!formData.name || !formData.phone || !formData.date || !formData.time) {
-      alert("Please fill in all required fields");
+      setBookingError("Please fill in all required fields");
       return;
     }
 
@@ -53,329 +67,446 @@ const BookAppointment = () => {
     setBookingError(null);
 
     try {
-      // Prepare payload matching backend expectations
       const payload = {
         full_name: formData.name,
         phone: formData.phone,
         email: formData.email || null,
-        service: formData.services,
+        service: formData.service,
         preferred_mode: formData.mode,
         preferred_date: formData.date,
         preferred_time: formData.time
       };
 
-      console.log("📤 Sending to backend:", payload);
-
-      const res = await axios.post("http://localhost:5000/api/appointments", payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const res = await axios.post("http://localhost:5000/api/appointments", payload);
       
-      console.log("✅ Success:", res.data);
-      
-      setIsConfirmed(true);
-      
-    } catch (error) {
-      console.error("❌ Error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
-      let errorMsg = "Failed to book appointment. Please try again.";
-      if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
+      if (res.data) {
+        setIsConfirmed(true);
       }
-      
-      alert(`Booking failed: ${errorMsg}`);
-      setBookingError(errorMsg);
+    } catch (error) {
+      console.error("Booking error:", error);
+      setBookingError(error.response?.data?.message || "Failed to book appointment. Please try again.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setActiveStep(1);
+    setIsConfirmed(false);
+    setFormData({
+      name: "",
+      phone: "",
+      email: "",
+      date: "",
+      time: "",
+      mode: "In-person",
+      service: "General Checkup",
+    });
+    setBookingError(null);
   };
 
   const isStep1Valid = formData.name && formData.phone;
   const isStep2Valid = formData.date && formData.time;
 
   return (
-    <div id="appointments" className="min-h-screen bg-gray-100 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-800">Book Appointment</h1>
-          <p className="text-gray-600 mt-2">Gion Dental Clinic Patient Registration</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+              Book Your Appointment
+            </h1>
+            <p className="text-gray-600 text-lg">Schedule your visit at Gion Speciality Dental Clinic</p>
+          </motion.div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          {bookingError && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              Error: {bookingError}
-            </div>
-          )}
-          
-          <AnimatePresence mode="wait">
-
-            {activeStep === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <h2 className="text-2xl font-semibold flex items-center gap-2">
-                  <FaUser className="text-blue-600" /> Patient Information
-                </h2>
-
-                <div className="space-y-4">
-                  <input 
-                    name="name" 
-                    placeholder="Full Name" 
-                    value={formData.name} 
-                    onChange={handleInputChange} 
-                    className="form-input" 
-                    required
-                  />
-                  <input 
-                    name="phone" 
-                    placeholder="Phone Number" 
-                    value={formData.phone} 
-                    onChange={handleInputChange} 
-                    className="form-input" 
-                    required
-                  />
-                  <input 
-                    name="email" 
-                    placeholder="Email Address (Optional)" 
-                    value={formData.email} 
-                    onChange={handleInputChange} 
-                    className="form-input" 
-                    type="email"
-                  />
-                </div>
-
-                <button 
-                  disabled={!isStep1Valid} 
-                  onClick={() => setActiveStep(2)} 
-                  className={`btn-primary ${!isStep1Valid ? 'opacity-50 cursor-not-allowed' : ''}`}
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center gap-4">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                    activeStep >= step
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
                 >
-                  Next
-                </button>
+                  {step}
+                </div>
+                {step < 3 && (
+                  <div
+                    className={`w-12 h-0.5 mx-2 transition-all ${
+                      activeStep > step ? "bg-blue-600" : "bg-gray-200"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center gap-16 mt-2 text-sm text-gray-500">
+            <span>User Info</span>
+            <span>Appointment</span>
+            <span>Confirm</span>
+          </div>
+        </div>
+
+        {/* Main Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden"
+        >
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+            <div className="flex items-center gap-2 text-white">
+              <FaTooth className="text-yellow-300" />
+              <span className="font-medium">Well Come to Gion speciality </span>
+            </div>
+          </div>
+
+          <div className="p-6 md:p-8">
+            {bookingError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5" />
+                <span>{bookingError}</span>
               </motion.div>
             )}
 
-            {activeStep === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <h2 className="text-2xl font-semibold flex items-center gap-2">
-                  <FaCalendarAlt className="text-blue-600" /> Appointment Information
-                </h2>
+            <AnimatePresence mode="wait">
+              {/* Step 1 - User Information */}
+              {activeStep === 1 && (
+                <motion.div
+                  key="step1"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-center gap-3 pb-2 border-b border-gray-100">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <FaUser className="text-blue-600" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-800">User Information</h2>
+                  </div>
 
-                <div className="space-y-4">
-                  <select 
-                    name="services" 
-                    value={formData.services} 
-                    onChange={handleInputChange} 
-                    className="form-input"
-                  >
-                    {services.map((s) => <option key={s}>{s}</option>)}
-                  </select>
+                  <div className="space-y-4">
+                    <div className="group">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                        <input
+                          name="name"
+                          placeholder="Enter your full name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                  <input 
-                    type="date" 
-                    name="date" 
-                    value={formData.date} 
-                    onChange={handleInputChange} 
-                    className="form-input" 
-                    min={new Date().toISOString().split('T')[0]}
-                    required
-                  />
+                    <div className="group">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phone Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <FaPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                        <input
+                          name="phone"
+                          placeholder="+251 XXX XXX XXX"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                          required
+                        />
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">We'll call or text to confirm</p>
+                    </div>
 
-                  <select 
-                    name="mode" 
-                    value={formData.mode} 
-                    onChange={handleInputChange} 
-                    className="form-input"
-                  >
-                    <option>In-person</option>
-                    <option>Online</option>
-                  </select>
-
-                  <div>
-                    <p className="font-medium mb-2">Select Time</p>
-                    <div className="grid grid-cols-4 gap-3">
-                      {availableTimes.map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setFormData((p) => ({ ...p, time: t }))}
-                          className={`time-btn ${formData.time === t ? "active" : ""}`}
-                        >
-                          {t}
-                        </button>
-                      ))}
+                    <div className="group">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address <span className="text-gray-400">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                        <input
+                          name="email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-between">
-                  <button onClick={() => setActiveStep(1)} className="btn-secondary">
-                    Back
-                  </button>
-                  <button 
-                    disabled={!isStep2Valid} 
-                    onClick={() => setActiveStep(3)} 
-                    className={`btn-primary ${!isStep2Valid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  <button
+                    disabled={!isStep1Valid}
+                    onClick={() => setActiveStep(2)}
+                    className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+                      isStep1Valid
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
                   >
-                    Next
+                    Continue <FaArrowRight size={14} />
                   </button>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
 
-            {activeStep === 3 && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="text-center space-y-6"
-              >
-                {!isConfirmed ? (
-                  <>
-                    <h2 className="text-2xl font-semibold">Confirm Appointment</h2>
-                    <div className="bg-gray-50 border rounded-lg p-5 text-left space-y-1">
-                      <p><strong>Name:</strong> {formData.name}</p>
-                      <p><strong>Phone:</strong> {formData.phone}</p>
-                      <p><strong>Email:</strong> {formData.email || 'Not provided'}</p>
-                      <p><strong>Service:</strong> {formData.services}</p>
-                      <p><strong>Mode:</strong> {formData.mode}</p>
-                      <p><strong>Date:</strong> {formData.date}</p>
-                      <p><strong>Time:</strong> {formData.time}</p>
+              {/* Step 2 - Appointment Details */}
+              {activeStep === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-center gap-3 pb-2 border-b border-gray-100">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <FaCalendarAlt className="text-blue-600" />
                     </div>
-                    <button 
-                      onClick={handleConfirmBooking} 
-                      className="btn-success"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Booking...' : 'Confirm Booking'}
-                    </button>
-                    <button 
-                      onClick={() => setActiveStep(2)} 
-                      className="btn-secondary ml-3"
-                    >
-                      Back
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <FaCheckCircle className="text-green-500 text-6xl mx-auto" />
-                    <h2 className="text-3xl font-bold">Appointment Confirmed!</h2>
-                    <p className="text-gray-600">Thank you for choosing Gion Dental Clinic.</p>
-                    <p className="text-sm text-gray-500">We will contact you shortly to confirm your appointment.</p>
-                    <button 
-                      onClick={() => {
-                        setActiveStep(1);
-                        setIsConfirmed(false);
-                        setFormData({
-                          name: "",
-                          phone: "",
-                          email: "",
-                          date: "",
-                          time: "",
-                          mode: "In-person",
-                          services: "General Checkup",
-                        });
-                      }}
-                      className="btn-secondary mt-4"
-                    >
-                      Book Another Appointment
-                    </button>
-                  </>
-                )}
-              </motion.div>
-            )}
+                    <h2 className="text-xl font-semibold text-gray-800">Appointment Details</h2>
+                  </div>
 
-          </AnimatePresence>
+                  <div className="space-y-4">
+                    {/* Service Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Service <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <FaTooth className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                        <select
+                          name="service"
+                          value={formData.service}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none appearance-none bg-white cursor-pointer"
+                        >
+                          {services.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Date Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Preferred Date <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                        <input
+                          type="date"
+                          name="date"
+                          value={formData.date}
+                          onChange={handleInputChange}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mode Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Appointment Mode
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setFormData((p) => ({ ...p, mode: "In-person" }))}
+                          className={`py-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                            formData.mode === "In-person"
+                              ? "border-blue-500 bg-blue-50 text-blue-700"
+                              : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          <FaClinicMedical size={16} />
+                          In-person
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData((p) => ({ ...p, mode: "Online" }))}
+                          className={`py-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                            formData.mode === "Online"
+                              ? "border-blue-500 bg-blue-50 text-blue-700"
+                              : "border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          <MdOnlinePrediction size={16} />
+                          Online
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Time Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Time <span className="text-red-500">*</span>
+                      </label>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
+                        {availableTimes.map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setFormData((p) => ({ ...p, time: t }))}
+                            className={`py-2 px-2 rounded-lg text-sm transition-all ${
+                              formData.time === t
+                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                                : "border border-gray-200 text-gray-600 hover:border-blue-300 hover:bg-blue-50"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setActiveStep(1)}
+                      className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+                    >
+                      <FaArrowLeft size={14} /> Back
+                    </button>
+                    <button
+                      disabled={!isStep2Valid}
+                      onClick={() => setActiveStep(3)}
+                      className={`flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
+                        isStep2Valid
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl"
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      Review <FaArrowRight size={14} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 3 - Confirmation */}
+              {activeStep === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  {!isConfirmed ? (
+                    <>
+                      <div className="flex items-center gap-3 pb-2 border-b border-gray-100">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <FaCheckCircle className="text-blue-600" />
+                        </div>
+                        <h2 className="text-xl font-semibold text-gray-800">Confirm Your Appointment</h2>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-5 space-y-3">
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-gray-600">User Name</span>
+                          <span className="font-medium text-gray-800">{formData.name}</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-gray-600">Phone</span>
+                          <span className="font-medium text-gray-800">{formData.phone}</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-gray-600">Service</span>
+                          <span className="font-medium text-gray-800">{formData.service}</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b border-gray-200">
+                          <span className="text-gray-600">Date & Time</span>
+                          <span className="font-medium text-gray-800">{formData.date} • {formData.time}</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="text-gray-600">Mode</span>
+                          <span className="font-medium text-gray-800">{formData.mode}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setActiveStep(2)}
+                          className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-all"
+                        >
+                          Back
+                        </button>
+                        <button
+                          onClick={handleConfirmBooking}
+                          disabled={isLoading}
+                          className="flex-1 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                        >
+                          {isLoading ? (
+                            <>
+                              <FaSpinner className="animate-spin" />
+                              Booking...
+                            </>
+                          ) : (
+                            "Confirm Booking"
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-6 space-y-4">
+                      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                        <FaCheckCircle className="text-green-500 text-4xl" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-gray-800">Appointment Confirmed! 🎉</h2>
+                      <p className="text-gray-600">
+                        Thank you for choosing <span className="font-medium">Gion Speciality Dental Clinic</span>
+                      </p>
+                      <div className="bg-blue-50 rounded-xl p-4">
+                        <p className="text-sm text-gray-600">
+                          We've sent a confirmation to <strong>{formData.phone}</strong>
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          A team member will call you within 24 hours to confirm
+                        </p>
+                      </div>
+                      <button
+                        onClick={resetForm}
+                        className="mt-4 py-3 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:shadow-lg transition-all"
+                      >
+                        Book Another Appointment
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Info Footer */}
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-500">
+            📍 3M Mall, Megenagna • 4th Floor • Call us: +251 961 012 087
+          </p>
         </div>
       </div>
-
-      <style>{`
-        .form-input { 
-          width: 100%; 
-          padding: 12px 14px; 
-          border: 1px solid #ddd; 
-          border-radius: 8px; 
-          outline: none; 
-          transition: all 0.2s;
-        }
-        .form-input:focus { 
-          border-color: #2563eb; 
-          box-shadow: 0 0 0 2px #dbeafe; 
-        }
-        .btn-primary { 
-          background: #2563eb; 
-          color: white; 
-          padding: 12px 40px; 
-          border-radius: 8px; 
-          font-weight: 600;
-          transition: background 0.2s;
-        }
-        .btn-primary:hover:not(:disabled) {
-          background: #1d4ed8;
-        }
-        .btn-secondary { 
-          border: 1px solid #2563eb; 
-          color: #2563eb; 
-          padding: 12px 40px; 
-          border-radius: 8px; 
-          font-weight: 600;
-          background: white;
-          transition: all 0.2s;
-        }
-        .btn-secondary:hover {
-          background: #eff6ff;
-        }
-        .btn-success { 
-          background: #16a34a; 
-          color: white; 
-          padding: 14px 50px; 
-          border-radius: 8px; 
-          font-weight: 600; 
-          font-size: 16px;
-          transition: background 0.2s;
-        }
-        .btn-success:hover:not(:disabled) {
-          background: #15803d;
-        }
-        .btn-success:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .time-btn { 
-          padding: 10px; 
-          border-radius: 8px; 
-          border: 1px solid #ddd;
-          background: white;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .time-btn:hover {
-          background: #f3f4f6;
-        }
-        .time-btn.active { 
-          background: #2563eb; 
-          color: white; 
-          border: none; 
-        }
-      `}</style>
     </div>
   );
 };

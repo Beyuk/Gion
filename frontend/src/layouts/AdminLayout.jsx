@@ -1,3 +1,4 @@
+// AdminLayout.jsx - Profile in TOP RIGHT corner like the image
 import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
@@ -24,13 +25,14 @@ export default function AdminLayout() {
 
   const adminDataStr = localStorage.getItem("adminData");
   const adminData = adminDataStr ? JSON.parse(adminDataStr) : null;
-  const adminName = adminData?.name || "Admin";
-  const adminEmail = adminData?.email || "";
+  const adminName = adminData?.name || "Daniel Shukare";
+  const adminRole = "Super Admin";
+  const adminEmail = adminData?.email || "daniel@giordental.com";
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-blue-800/30">
-        <h2 className="text-2xl font-bold text-white">Gion Admin</h2>
+        <h2 className="text-2xl font-bold text-white">Gion</h2>
         <p className="text-sm text-blue-200 mt-1">Specialty Dental Clinic</p>
       </div>
 
@@ -58,17 +60,13 @@ export default function AdminLayout() {
         })}
       </div>
 
-      <div className="p-6 border-t border-blue-800/30">
-        <div className="mb-4 pb-4 border-b border-blue-800/30">
-          <p className="text-xs text-blue-300/70 mb-1">Logged in as</p>
-          <p className="text-sm font-medium text-white">{adminName}</p>
-          <p className="text-xs text-blue-300/70 mt-1 truncate">{adminEmail}</p>
-        </div>
+      {/* Sidebar bottom - only logout button */}
+      <div className="p-4 border-t border-blue-800/30">
         <button
           onClick={handleLogout}
-          className="w-full bg-red-500/10 hover:bg-red-500 text-red-300 hover:text-white py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 group"
+          className="w-full bg-red-500/10 hover:bg-red-500 text-red-300 hover:text-white py-2 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
         >
-          <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
           Logout
@@ -79,10 +77,12 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
       <div className="hidden md:block w-72 bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-white shadow-xl">
         <SidebarContent />
       </div>
 
+      {/* Mobile Sidebar */}
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 md:hidden"
@@ -100,49 +100,85 @@ export default function AdminLayout() {
         </div>
       )}
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-4 md:px-8">
-          <button className="md:hidden text-gray-700 text-2xl mr-4" onClick={() => setMobileOpen(true)}>☰</button>
-          <h1 className="text-xl font-semibold text-gray-800 md:hidden">Gion Admin</h1>
-          
-          <div className="relative ml-auto">
-            <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
-                {adminName.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-gray-700 hidden md:block">{adminName}</span>
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
+        {/* Header with Profile in TOP RIGHT corner like image */}
+        <header className="bg-white border-b h-16 flex items-center justify-between px-6 md:px-8">
+          {/* Left side - Logo / Title */}
+          <div className="flex items-center gap-4">
+            <button
+              className="md:hidden text-gray-700 text-2xl"
+              onClick={() => setMobileOpen(true)}
+            >
+              ☰
             </button>
-            
-            {showProfileMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{adminName}</p>
-                    <p className="text-xs text-gray-500 truncate">{adminEmail}</p>
-                  </div>
-                  <Link to="/admin/change-password" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6-4h12a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-10V6a4 4 0 00-8 0v3h8z" />
-                    </svg>
-                    Change Password
-                  </Link>
-                  <button onClick={() => { setShowProfileMenu(false); handleLogout(); }} className="flex items-center gap-3 w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50 transition">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                  </button>
+            <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
+          </div>
+
+          {/* Right side - Search + Profile (like image) */}
+          <div className="flex items-center gap-6">
+            {/* Search Bar */}
+            <div className="hidden md:block">
+              <input
+                type="text"
+                placeholder="Search here..."
+                className="w-64 px-4 py-2 bg-gray-100 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+              />
+            </div>
+
+            {/* Profile in TOP RIGHT - Avatar + Name + Role (like image) */}
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-3 focus:outline-none"
+              >
+                {/* Avatar */}
+                <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center font-semibold shadow-sm">
+                  {adminName.charAt(0).toUpperCase()}
                 </div>
-              </>
-            )}
+                {/* Name and Role */}
+                <div className="hidden md:block text-left">
+                  <p className="text-sm font-medium text-gray-800">{adminName}</p>
+                  <p className="text-xs text-gray-500">{adminRole}</p>
+                </div>
+                {/* Dropdown arrow */}
+                <svg className={`hidden md:block w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center font-bold">
+                        {adminName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{adminName}</p>
+                        <p className="text-xs text-gray-500">{adminRole}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{adminEmail}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="py-1">
+                    <Link to="/admin/settings" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      Settings
+                    </Link>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-6 md:p-8 bg-[#f8fbff]">
           <Outlet />
         </main>
       </div>

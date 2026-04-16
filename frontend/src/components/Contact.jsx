@@ -116,7 +116,7 @@ const Contact = () => {
             </div>
 
             <div className="space-y-6 text-gray-700">
-              {/* Address with copy */}
+              {/* Address with copy - FIXED: Changed to 4th Floor */}
               <div className="flex items-start gap-4 group">
                 <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-600 transition-colors duration-300 shrink-0">
                   <MapPin className="text-blue-600 group-hover:text-white transition-colors duration-300" size={22} />
@@ -124,11 +124,11 @@ const Contact = () => {
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900">Address</p>
                   <p className="text-gray-600">3M Mall, Megenagna</p>
-                  <p className="text-gray-500 text-sm">Ground Floor, Near Main Entrance</p>
+                  <p className="text-gray-500 text-sm">4th Floor, Near Main Entrance & Elevator</p>
                   <p className="text-gray-500 text-sm">Addis Ababa, Ethiopia</p>
                 </div>
                 <button
-                  onClick={() => copyToClipboard("3M Mall, Megenagna, Addis Ababa, Ethiopia")}
+                  onClick={() => copyToClipboard("3M Mall, Megenagna, 4th Floor, Addis Ababa, Ethiopia")}
                   className="text-gray-400 hover:text-blue-600 transition-colors shrink-0"
                 >
                   {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
@@ -169,7 +169,7 @@ const Contact = () => {
                 <div>
                   <p className="font-semibold text-gray-900">Working Hours</p>
                   <div className="text-gray-600 space-y-1">
-                    <p>Monday – Saturday: <span className="font-medium">8:00 AM – 6:00 PM</span></p>
+                    <p>Monday – Saturday: <span className="font-medium">8:00 AM – 8:00 PM</span></p>
                     <p className="text-red-500">Sunday: Closed</p>
                   </div>
                 </div>
@@ -304,7 +304,7 @@ const Contact = () => {
           </div>
         </div>
 
-        {/* Map Section - Exact 3M Mall Megenagna Location */}
+        {/* Map Section - FIXED: Changed to 4th Floor */}
         <div className="mt-16">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
@@ -312,7 +312,7 @@ const Contact = () => {
                 <div>
                   <h3 className="text-white font-bold text-xl flex items-center gap-2">
                     <MapPin size={20} className="text-yellow-400" />
-                    📍 3M Mall, Megenagna - Ground Floor
+                    📍 3M Mall, Megenagna - 4th Floor
                   </h3>
                   <p className="text-blue-100 text-sm mt-1">Near Main Entrance & Elevator | Free Parking Available</p>
                 </div>
@@ -341,14 +341,14 @@ const Contact = () => {
                 className="hover:opacity-95 transition-opacity"
               ></iframe>
               
-              {/* Location badge overlay */}
+              {/* Location badge overlay - FIXED: Changed to 4th Floor */}
               <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 flex items-center gap-3">
                 <div className="bg-blue-100 p-2 rounded-full">
                   <MapPin className="text-blue-600" size={18} />
                 </div>
                 <div>
                   <p className="font-bold text-gray-900 text-sm">Gion Speciality Dental Clinic</p>
-                  <p className="text-gray-600 text-xs">3M Mall, Megenagna • Ground Floor</p>
+                  <p className="text-gray-600 text-xs">3M Mall, Megenagna • 4th Floor</p>
                 </div>
               </div>
             </div>
@@ -370,7 +370,7 @@ const Contact = () => {
                 </div>
               </div>
               <div className="text-xs text-gray-500">
-                📍 Exact location: 3M Mall, Megenagna
+                📍 Exact location: 3M Mall, Megenagna - 4th Floor
               </div>
             </div>
           </div>

@@ -144,7 +144,7 @@ const sendAppointmentStatusEmail = async (data) => {
           ${data.status === 'approved' ? `
             <div style="background: #e8f5e9; padding: 15px; margin: 20px 0; border-radius: 5px;">
               <p><strong>📍 Location:</strong> Gion Speciality Dental Clinic</p>
-              <p><strong>📞 Contact:</strong> +251 XXX XXX XXX</p>
+              <p><strong>📞 Contact:</strong>+251 961 012 087</p>
               <p><strong>⚠️ Please arrive 10 minutes before your appointment.</strong></p>
             </div>
           ` : ''}

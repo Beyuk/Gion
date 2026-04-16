@@ -70,7 +70,7 @@ app.post("/api/admin/login", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
+/*
 // ============= CHANGE PASSWORD ROUTE =============
 app.post("/api/admin/change-password", async (req, res) => {
   const { email, currentPassword, newPassword } = req.body;
@@ -115,7 +115,7 @@ app.post("/api/admin/change-password", async (req, res) => {
     console.error("Change password error:", err);
     res.status(500).json({ success: false, message: "Server error: " + err.message });
   }
-});
+});*/
 
 // ============= RESET PASSWORD ROUTE =============
 app.post("/api/admin/reset-password", async (req, res) => {
